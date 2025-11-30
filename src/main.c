@@ -1,5 +1,4 @@
-#include <cstdlib>
-#include <iostream>
+#include <stdio.h>
 
 #include "SDL3/SDL.h"
 #include "glad/glad.h"
@@ -9,8 +8,8 @@ int main() {
 	bool done = false;
 
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
-		std::cout << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
+		return 1;
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -19,35 +18,37 @@ int main() {
 
 	window = SDL_CreateWindow("Learn OpenGL", 640, 480, SDL_WINDOW_OPENGL);
 	if (window == nullptr) {
-		std::cerr << "Could not create window: " << SDL_GetError() << std::endl;
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Could not create window: %s\n", SDL_GetError());
+		return 1;
 	}
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	if (context == nullptr) {
-		std::cerr << "Failed to create context: " << SDL_GetError() << std::endl;
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Failed to create context: %s\n", SDL_GetError());
+		return 1;
 	}
 
 	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
-		std::cerr << "Failed to initialize GLAD" << std::endl;
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Failed to initialize GLAD\n");
+		return 1;
 	}
 
 	while (!done) {
-		SDL_Event event;
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
+		SDL_GL_SwapWindow(window);
+
+		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) {
 				done = true;
 			}
 		}
-
-		// TODO: Render logic
 	}
 
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	exit(EXIT_SUCCESS);
+	return 0;
 }
