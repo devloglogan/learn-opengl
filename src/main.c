@@ -1,54 +1,51 @@
 #include <stdio.h>
 
-#include "SDL3/SDL.h"
-#include "glad/glad.h"
+#include "GLAD/glad.h"
+#include "GLFW/glfw3.h"
+
+void process_input(GLFWwindow *window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
+}
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+	glViewport(0, 0, width, height);
+}
 
 int main() {
-	SDL_Window *window;
-	bool done = false;
-
-	if (!SDL_Init(SDL_INIT_VIDEO)) {
-		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
+	if (!glfwInit()) {
+		fprintf(stderr, "Failed to initialize GLFW\n");
 		return 1;
 	}
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = SDL_CreateWindow("Learn OpenGL", 640, 480, SDL_WINDOW_OPENGL);
+	GLFWwindow *window = glfwCreateWindow(640, 480, "Learn OpenGL", nullptr, nullptr);
 	if (window == nullptr) {
-		fprintf(stderr, "Could not create window: %s\n", SDL_GetError());
+		fprintf(stderr, "Could not create GLFW window\n");
 		return 1;
 	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-	if (context == nullptr) {
-		fprintf(stderr, "Failed to create context: %s\n", SDL_GetError());
-		return 1;
-	}
-
-	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		fprintf(stderr, "Failed to initialize GLAD\n");
 		return 1;
 	}
 
-	while (!done) {
+	while (!glfwWindowShouldClose(window)) {
+		process_input(window);
+
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		SDL_GL_SwapWindow(window);
-
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_EVENT_QUIT) {
-				done = true;
-			}
-		}
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-
+	glfwTerminate();
 	return 0;
 }
