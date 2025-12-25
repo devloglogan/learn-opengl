@@ -5,9 +5,8 @@
 
 // clang-format off
 GLfloat vertices[] = {
-	 0.0f,  0.5f, 0.0f,
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.0f,
+	 0.25f,  0.0f,
 };
 // clang-format on
 
@@ -80,7 +79,7 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void *)0);
 	glEnableVertexAttribArray(0);
 
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -124,7 +123,8 @@ int main() {
 
 		glUseProgram(shader_program);
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glPointSize(10.0f);
+		glDrawArrays(GL_POINTS, 0, 3);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
