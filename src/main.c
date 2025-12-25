@@ -2,6 +2,7 @@
 
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
+#include "cglm/util.h"
 
 // clang-format off
 GLfloat vertices[] = {
@@ -20,28 +21,36 @@ const GLchar fragment_src[] = {
 	, '\0'
 };
 
-void process_input(GLFWwindow *window) {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
+void process_input(GLFWwindow *p_window, float p_delta_time, float *r_angle) {
+	if (glfwGetKey(p_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(p_window, true);
+	}
+
+	const float ROTATION_SPEED = glm_rad(180.0f);
+	if (glfwGetKey(p_window, GLFW_KEY_A) == GLFW_PRESS) {
+		*r_angle += p_delta_time * ROTATION_SPEED;
+	}
+	if (glfwGetKey(p_window, GLFW_KEY_D) == GLFW_PRESS) {
+		*r_angle -= p_delta_time * ROTATION_SPEED;
 	}
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-	const float TARGET_ASPECT_RATIO = 640.0f / 480.0f;
+void framebuffer_size_callback(GLFWwindow *p_window, int p_width, int p_height) {
+	const float TARGET_ASPECT_RATIO = 1.0f;
 	int viewport_width, viewport_height, viewport_x, viewport_y;
 
-	float window_aspect = (float)width / (float)height;
+	float window_aspect = (float)p_width / (float)p_height;
 
 	if (window_aspect > TARGET_ASPECT_RATIO) {
-		viewport_height = height;
-		viewport_width = (int)(height * TARGET_ASPECT_RATIO);
-		viewport_x = (width - viewport_width) / 2;
+		viewport_height = p_height;
+		viewport_width = (int)(p_height * TARGET_ASPECT_RATIO);
+		viewport_x = (p_width - viewport_width) / 2;
 		viewport_y = 0;
 	} else {
-		viewport_width = width;
-		viewport_height = (int)(width / TARGET_ASPECT_RATIO);
+		viewport_width = p_width;
+		viewport_height = (int)(p_width / TARGET_ASPECT_RATIO);
 		viewport_x = 0;
-		viewport_y = (height - viewport_height) / 2;
+		viewport_y = (p_height - viewport_height) / 2;
 	}
 
 	glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
@@ -115,13 +124,18 @@ int main() {
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
 
+	float time = 0.0f;
+	float angle = 0.0f;
 	while (!glfwWindowShouldClose(window)) {
-		process_input(window);
+		float delta_time = glfwGetTime() - time;
+		time += delta_time;
+		process_input(window, delta_time, &angle);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shader_program);
+		glUniform1f(glGetUniformLocation(shader_program, "u_angle"), angle);
 		glBindVertexArray(vao);
 		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS, 0, 3);
