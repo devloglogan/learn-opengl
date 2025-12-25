@@ -28,7 +28,24 @@ void process_input(GLFWwindow *window) {
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-	glViewport(0, 0, width, height);
+	const float TARGET_ASPECT_RATIO = 640.0f / 480.0f;
+	int viewport_width, viewport_height, viewport_x, viewport_y;
+
+	float window_aspect = (float)width / (float)height;
+
+	if (window_aspect > TARGET_ASPECT_RATIO) {
+		viewport_height = height;
+		viewport_width = (int)(height * TARGET_ASPECT_RATIO);
+		viewport_x = (width - viewport_width) / 2;
+		viewport_y = 0;
+	} else {
+		viewport_width = width;
+		viewport_height = (int)(width / TARGET_ASPECT_RATIO);
+		viewport_x = 0;
+		viewport_y = (height - viewport_height) / 2;
+	}
+
+	glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 }
 
 int main() {
