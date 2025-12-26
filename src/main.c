@@ -21,17 +21,24 @@ const GLchar fragment_src[] = {
 	, '\0'
 };
 
-void process_input(GLFWwindow *p_window, float p_delta_time, float *r_angle) {
+void process_input(GLFWwindow *p_window, float p_delta_time, float *r_parent_angle, float *r_child_angle) {
 	if (glfwGetKey(p_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(p_window, true);
 	}
 
 	const float ROTATION_SPEED = glm_rad(180.0f);
 	if (glfwGetKey(p_window, GLFW_KEY_A) == GLFW_PRESS) {
-		*r_angle += p_delta_time * ROTATION_SPEED;
+		*r_parent_angle += p_delta_time * ROTATION_SPEED;
 	}
 	if (glfwGetKey(p_window, GLFW_KEY_D) == GLFW_PRESS) {
-		*r_angle -= p_delta_time * ROTATION_SPEED;
+		*r_parent_angle -= p_delta_time * ROTATION_SPEED;
+	}
+
+	if (glfwGetKey(p_window, GLFW_KEY_J) == GLFW_PRESS) {
+		*r_child_angle += p_delta_time * ROTATION_SPEED;
+	}
+	if (glfwGetKey(p_window, GLFW_KEY_L) == GLFW_PRESS) {
+		*r_child_angle -= p_delta_time * ROTATION_SPEED;
 	}
 }
 
@@ -124,25 +131,44 @@ int main() {
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
 
-	float time = 0.0f;
-	float angle = 0.0f;
+	float prev_time = 0.0f;
+
+	mat3 parent_model = GLM_MAT3_IDENTITY_INIT;
+	vec2 parent_position = { 0.0f, 0.0f };
+	float parent_angle = 0.0f;
+	glm_translate2d(&parent_model[0], &parent_position[0]);
+
+	mat3 child_model = GLM_MAT3_IDENTITY_INIT;
+	vec2 child_position = { vertices[2], vertices[3] };
+	float child_angle = 0.0f;
+	glm_translate2d(&child_model[0], &child_position[0]);
+
 	while (!glfwWindowShouldClose(window)) {
-		float delta_time = glfwGetTime() - time;
-		time += delta_time;
-		process_input(window, delta_time, &angle);
+		float delta_time = glfwGetTime() - prev_time;
+		prev_time += delta_time;
+		process_input(window, delta_time, &parent_angle, &child_angle);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shader_program);
-
-		mat3 transform = GLM_MAT3_IDENTITY_INIT;
-		glm_rotate2d(&transform[0], angle);
-		glUniformMatrix3fv(glGetUniformLocation(shader_program, "u_transform"), 1, false, &transform[0][0]);
-
 		glBindVertexArray(vao);
 		glPointSize(10.0f);
-		glDrawArrays(GL_POINTS, 0, 3);
+
+		mat3 parent_transform = GLM_MAT3_IDENTITY_INIT;
+		glm_mat3_mul(&parent_transform[0], &parent_model[0], &parent_transform[0]);
+		glm_rotate2d(&parent_transform[0], parent_angle);
+		glUniform3f(glGetUniformLocation(shader_program, "u_color"), 1.0f, 0.0f, 0.0f);
+		glUniformMatrix3fv(glGetUniformLocation(shader_program, "u_transform"), 1, false, &parent_transform[0][0]);
+		glDrawArrays(GL_POINTS, 0, 2);
+
+		mat3 child_transform = GLM_MAT3_IDENTITY_INIT;
+		glm_mat3_mul(&child_transform[0], &child_model[0], &child_transform[0]);
+		glm_rotate2d(&child_transform[0], child_angle);
+		glm_mat3_mul(&parent_transform[0], &child_transform[0], &child_transform[0]);
+		glUniform3f(glGetUniformLocation(shader_program, "u_color"), 0.0f, 1.0f, 0.0f);
+		glUniformMatrix3fv(glGetUniformLocation(shader_program, "u_transform"), 1, false, &child_transform[0][0]);
+		glDrawArrays(GL_POINTS, 0, 2);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
