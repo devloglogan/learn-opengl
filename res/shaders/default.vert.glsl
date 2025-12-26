@@ -1,20 +1,10 @@
 #version 330 core
 layout (location = 0) in vec2 a_position;
 
-uniform float u_angle;
-
-vec2 rotate(vec2 position, float angle) {
-    float cos_angle = cos(angle);
-    float sin_angle = sin(angle);
-
-    vec2 rotated_pos;
-    rotated_pos.x = position.x * cos_angle - position.y * sin_angle;
-    rotated_pos.y = position.x * sin_angle + position.y * cos_angle;
-
-    return rotated_pos;
-}
+uniform mat3 u_transform;
 
 void main()
 {
-    gl_Position = vec4(rotate(a_position, u_angle), 0.0, 1.0);
+    vec3 position = u_transform * vec3(a_position, 0.0f);
+    gl_Position = vec4(position , 1.0f);
 }

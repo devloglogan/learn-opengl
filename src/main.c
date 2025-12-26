@@ -2,7 +2,7 @@
 
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
-#include "cglm/util.h"
+#include "cglm/cglm.h"
 
 // clang-format off
 GLfloat vertices[] = {
@@ -88,7 +88,7 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void *)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
 	glEnableVertexAttribArray(0);
 
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -117,7 +117,7 @@ int main() {
 	glLinkProgram(shader_program);
 	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+		glGetProgramInfoLog(shader_program, 512, nullptr, info_log);
 		fprintf(stderr, "ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s\n", info_log);
 	}
 
@@ -135,7 +135,11 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shader_program);
-		glUniform1f(glGetUniformLocation(shader_program, "u_angle"), angle);
+
+		mat3 transform = GLM_MAT3_IDENTITY_INIT;
+		glm_rotate2d(&transform[0], angle);
+		glUniformMatrix3fv(glGetUniformLocation(shader_program, "u_transform"), 1, false, &transform[0][0]);
+
 		glBindVertexArray(vao);
 		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS, 0, 3);
