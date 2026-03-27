@@ -1,4 +1,6 @@
-#include <stdio.h>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
@@ -11,15 +13,14 @@ GLfloat vertices[] = {
 };
 // clang-format on
 
-const GLchar vertex_src[] = {
-#embed "../res/shaders/default.vert.glsl"
-	, '\0'
-};
-
-const GLchar fragment_src[] = {
-#embed "../res/shaders/default.frag.glsl"
-	, '\0'
-};
+std::string read_file(const char *path) {
+	std::ifstream f(path);
+	if (!f.is_open()) {
+		std::cerr << "Failed to open file: " << path << "\n";
+		return "";
+	}
+	return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+}
 
 void process_input(GLFWwindow *window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -50,7 +51,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 
 int main() {
 	if (!glfwInit()) {
-		fprintf(stderr, "Failed to initialize GLFW\n");
+		std::cerr << "Failed to initialize GLFW\n";
 		return 1;
 	}
 
@@ -60,14 +61,14 @@ int main() {
 
 	GLFWwindow *window = glfwCreateWindow(640, 480, "Learn OpenGL", nullptr, nullptr);
 	if (window == nullptr) {
-		fprintf(stderr, "Could not create GLFW window\n");
+		std::cerr << "Could not create GLFW window\n";
 		return 1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		fprintf(stderr, "Failed to initialize GLAD\n");
+		std::cerr << "Failed to initialize GLAD\n";
 		return 1;
 	}
 
@@ -83,24 +84,29 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
 	glEnableVertexAttribArray(0);
 
+	std::string vertex_src = read_file("res/shaders/default.vert.glsl");
+	std::string fragment_src = read_file("res/shaders/default.frag.glsl");
+
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, (const GLchar *const[]){ vertex_src }, nullptr);
+	const GLchar *vertex_src_ptr = vertex_src.c_str();
+	glShaderSource(vertex_shader, 1, &vertex_src_ptr, nullptr);
 	glCompileShader(vertex_shader);
 	int success;
 	char info_log[512];
 	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
-		fprintf(stderr, "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s\n", info_log);
+		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << info_log << "\n";
 	}
 
 	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, (const GLchar *const[]){ fragment_src }, nullptr);
+	const GLchar *fragment_src_ptr = fragment_src.c_str();
+	glShaderSource(fragment_shader, 1, &fragment_src_ptr, nullptr);
 	glCompileShader(fragment_shader);
 	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(fragment_shader, 512, nullptr, info_log);
-		fprintf(stderr, "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s\n", info_log);
+		std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << "\n";
 	}
 
 	GLuint shader_program = glCreateProgram();
@@ -109,8 +115,8 @@ int main() {
 	glLinkProgram(shader_program);
 	glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-		fprintf(stderr, "ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s\n", info_log);
+		glGetProgramInfoLog(shader_program, 512, nullptr, info_log);
+		std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << "\n";
 	}
 
 	glDeleteShader(vertex_shader);

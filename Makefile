@@ -3,4 +3,4 @@ all:
 	cd build && cmake .. && cmake --build .
 
 run:
-	cd build && ./LearnOpenGL
+	./build/Debug/LearnOpenGL
